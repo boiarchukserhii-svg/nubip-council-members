@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123f71"><meta name="description" content="Голови разових рад і рецензенти НУБіП України. Пошук за особою, спеціальністю та участю у захистах.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<title>Разові ради НУБіП України</title>
+<link rel="stylesheet" href="styles.css"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png">
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="top"><div class="wrap"><div class="brand"><img src="icon.svg" width="52" height="52" alt=""><div><p class="eyebrow">НАУКОВА АТЕСТАЦІЯ</p><h1>Разові ради НУБіП України</h1><p class="subtitle">Голови рад і рецензенти · 2026</p></div></div><nav aria-label="Посилання"><a class="button" href="https://boiarchukserhii-svg.github.io/nubip-defenses/">← До застосунку «Захисти НУБіП»</a><button id="install" hidden>Встановити застосунок</button></nav></div></header>
+<main class="wrap">
+<section class="overview" aria-label="Підсумки за 2026 рік"><div><span>Особи в довіднику</span><strong id="peopleTotal">—</strong></div><div><span>Разові ради</span><strong id="councilsTotal">—</strong></div><div><span>Участі як голови</span><strong id="chairsTotal">—</strong></div><div><span>Участі як рецензента</span><strong id="reviewersTotal">—</strong></div></section>
+<section class="panel filters" aria-labelledby="findTitle"><div class="sectionTitle"><div><p class="eyebrow">ДОВІДНИК УЧАСНИКІВ</p><h2 id="findTitle">Знайти особу</h2></div><button id="reset" class="quiet">Скинути фільтри</button></div><div class="filterGrid"><label class="searchLabel">Пошук<input id="search" type="search" placeholder="ПІБ, рада або здобувач" autocomplete="off"></label><label>Роль<select id="role"><option value="">Усі ролі</option value="chair">Голова ради</option><option value="reviewer">Рецензент</option></select></label><label>Спеціальність<select id="specialty"><option value="">Усі спеціальності</option></select></label><label>Сортування<select id="sort"><option value="name">За прізвищем</option><option value="count">За кількістю участей</option></select></label></div><p class="filterNote">Кількість участей у картках відповідає вибраним фільтрам.</p></section>
+<section aria-labelledby="resultsTitle"><div class="resultsHead"><h2 id="resultsTitle">Особи</h2><p id="resultCount" role="status" aria-live="polite">Завантаження бази…</p></div><p id="error" class="message error" role="alert" hidden></p><button id="retry" hidden>Спробувати знову</button><p id="empty" class="message" hidden>За цими умовами нікого не знайдено. Змініть пошук або скиньте фільтри.</p><div id="people" class="peopleGrid"></div></section>
+<section class="sourceNote"><h2>Про дані</h2><p>Відомості з публічних повідомлень про захист на сайті НУБіП України. Посади, ступені та звання наведені станом на відповідне повідомлення. Дати захистів — за оприлюдненим розкладом.</p><p id="dataDate"></p><a href="https://nubip.edu.ua/defend" target="_blank" rel="noopener noreferrer">Перейти до повідомлень про захист ↗</a><p id="offlineStatus" role="status"></p></section>
+</main>
+<footer class="wrap"><a href="https://nubip.edu.ua/department/viddil-aspirantury-doktorantury-ta-atestatsiyi-naukovykh-kadriv">Відділ аспірантури, докторантури та атестації наукових кадрів ↗</a><p>© <strong>Сергій БОЯРЧУК</strong>, 2026</p></footer>
+<dialog id="profile" aria-labelledby="profileName"><div class="dialogHead"><div><p class="eyebrow">КАРТКА ОСОБИ</p><h2 id="profileName"></h2></div><button id="close" class="close" aria-label="Закрити картку">✕</button></div><p id="profileScope" class="filterNote"></p><div id="profileCounts" class="profileCounts"></div><div id="participations"></div></dialog>
+</body></html>
