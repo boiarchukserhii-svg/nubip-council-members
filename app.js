@@ -28,7 +28,7 @@ async function load(){
   $("chairsTotal").textContent=database.participation.filter(m=>m.role==="chair").length;
   $("reviewersTotal").textContent=database.participation.filter(m=>m.role==="reviewer").length;
   $("specialty").replaceChildren(new Option("Усі спеціальності",""),...Array.from(new Set(database.defenses.map(d=>d.specialty).filter(Boolean))).sort(collator.compare).map(s=>new Option(s,s)));
-  $("dataDate").textContent="Базу перевірено "+new Intl.DateTimeFormat("uk-UA",{timeZone:"Europe/Kyiv"}).format(new Date(database.checked_at))+". Оновлення з’являються після завантаження нової версії бази.";
+  $("dataDate").textContent="Базу перевірено "+new Intl.DateTimeFormat("uk-UA",{timeZone:"Europe/Kyiv"}).format(new Date(database.checked_at));
   restoreFilters();render();
  }catch(error){$("error").textContent=error.message+" Перевірте з’єднання та спробуйте знову.";$("error").hidden=$("retry").hidden=false;$("resultCount").textContent="База недоступна";}
 }
@@ -43,6 +43,12 @@ function matches(person){
   return tokens.every(token=>haystack.includes(token));
  });
 }
+function personIcon(){
+ const box=el("span",null,"avatar");box.setAttribute("aria-hidden","true");
+ const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 24 24");
+ const circle=document.createElementNS(svg.namespaceURI,"circle");circle.setAttribute("cx","12");circle.setAttribute("cy","8");circle.setAttribute("r","3.5");
+ const body=document.createElementNS(svg.namespaceURI,"path");body.setAttribute("d","M5 21v-2a7 7 0 0 1 14 0v2");svg.append(circle,body);box.append(svg);return box;
+}
 function tally(memberships){const chair=memberships.filter(m=>m.role==="chair").length;return {chair,reviewer:memberships.length-chair};}
 function badges(memberships){const counts=tally(memberships),box=el("div",null,"counts");if(counts.chair)box.append(el("span",`Голова ради · ${counts.chair}`,"badge"));if(counts.reviewer)box.append(el("span",`Рецензент · ${counts.reviewer}`,"badge reviewer"));return box;}
 function render(){
@@ -55,10 +61,10 @@ function render(){
   const card=el("button",null,"personCard");card.type="button";card.setAttribute("aria-haspopup","dialog");
   const top=el("div",null,"nameLine"),name=el("span",null,"personName"),parts=person.name.split(" ");
   name.append(el("span",parts[0],"surname"),document.createTextNode(parts.slice(1).join(" ")));
-  top.append(name,el("span",parts.slice(0,2).map(p=>p[0]).join(""),"avatar"));
+  top.append(name,personIcon());
   const codes=Array.from(new Set(memberships.map(m=>m.defense.specialty.split(" ")[0]))).sort(collator.compare);
-  const bottom=el("div",null,"cardBottom"),last=memberships.map(m=>m.defense.date).sort().at(-1);
-  bottom.append(el("span","Останній захист · "+new Intl.DateTimeFormat("uk-UA").format(new Date(last+"T12:00:00"))),el("strong","Переглянути →"));
+  const bottom=el("div",null,"cardBottom");
+  bottom.append(el("strong","Переглянути →"));
   card.append(top,badges(memberships),el("p","Спеціальності: "+codes.join(", "),"specialties"),bottom);
   card.onclick=()=>openProfile(person,memberships);return card;
  }));saveFilters();
@@ -71,7 +77,7 @@ function openProfile(person,memberships){
  $("participations").replaceChildren(...[...memberships].sort((a,b)=>b.defense.date.localeCompare(a.defense.date)||collator.compare(a.defense.candidate,b.defense.candidate)).map(m=>{
   const d=m.defense,article=el("article",null,"participation"),meta=el("div",null,"meta");
   meta.append(el("span",roleNames[m.role],"badge"+(m.role==="reviewer"?" reviewer":"")),el("span",d.council),el("span",date(d.date)));
-  article.append(meta,el("h3",d.candidate),el("p",d.specialty),el("p",d.topic,"topic"),el("p",m.qualifications_source,"qualification"),el("p",m.position_affiliation_source,"position"));
+  article.append(meta,el("h3",d.candidate),el("p",d.specialty),el("p",d.topic,"topic"));
   if(allowedSource(d.source_url)){const link=el("a","Повідомлення про захист ↗","sourceLink");link.href=d.source_url;link.target="_blank";link.rel="noopener noreferrer";article.append(link);}return article;
  }));
  $("profile").showModal();$("profile").scrollTop=0;
