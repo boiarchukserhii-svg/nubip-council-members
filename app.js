@@ -7,6 +7,7 @@ const plural=new Intl.PluralRules("uk");
 const word=(n,forms)=>forms[{one:0,few:1,many:2,other:2}[plural.select(n)]];
 const labelPeople=n=>`${n} ${word(n,["особа","особи","осіб"])}`;
 const el=(tag,text,className)=>{const node=document.createElement(tag);if(text!=null)node.textContent=text;if(className)node.className=className;return node;};
+const candidateName=defense=>defense.candidate_display||defense.candidate;
 let database, people=[],defenses=new Map(), participationByPerson=new Map(),filtered=[],installPrompt;
 $("role").replaceChildren(new Option("Усі ролі",""),new Option("Голова ради","chair"),new Option("Рецензент","reviewer"));
 function allowedSource(url){try{const u=new URL(url);return u.protocol==="https:"&&["nubip.edu.ua","www.nubip.edu.ua"].includes(u.hostname);}catch{return false;}}
@@ -39,7 +40,7 @@ function matches(person){
  const tokens=query.split(" ").filter(Boolean);
  return person.memberships.filter(m=>{
   if(role&&m.role!==role||specialty&&m.defense.specialty!==specialty)return false;
-  const haystack=normalize([person.name,m.defense.council,m.defense.candidate,m.defense.specialty].join(" "));
+  const haystack=normalize([person.name,m.defense.council,candidateName(m.defense),m.defense.candidate,m.defense.specialty].join(" "));
   return tokens.every(token=>haystack.includes(token));
  });
 }
@@ -77,7 +78,7 @@ function openProfile(person,memberships){
  $("participations").replaceChildren(...[...memberships].sort((a,b)=>b.defense.date.localeCompare(a.defense.date)||collator.compare(a.defense.candidate,b.defense.candidate)).map(m=>{
   const d=m.defense,article=el("article",null,"participation"),meta=el("div",null,"meta");
   meta.append(el("span",roleNames[m.role],"badge"+(m.role==="reviewer"?" reviewer":"")),el("span",d.council),el("span",date(d.date)));
-  article.append(meta,el("h3",d.candidate),el("p",d.specialty),el("p",d.topic,"topic"));
+  article.append(meta,el("h3",candidateName(d)),el("p",d.specialty),el("p",d.topic,"topic"));
   if(allowedSource(d.source_url)){const link=el("a","Повідомлення про захист ↗","sourceLink");link.href=d.source_url;link.target="_blank";link.rel="noopener noreferrer";article.append(link);}return article;
  }));
  $("profile").showModal();$("profile").scrollTop=0;
