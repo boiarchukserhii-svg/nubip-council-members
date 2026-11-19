@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#dceeff"><meta name="description" content="Голови разових рад і рецензенти НУБіП України. Пошук за особою, спеціальністю та участю у захистах.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title>Разові ради НУБіП України</title>
-<link rel="stylesheet" href="styles.css"><link rel="manifest" href="manifest.webmanifest?v=3"><link rel="icon" href="icon.svg?v=2" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png?v=2">
+<link rel="stylesheet" href="styles.css?v=9"><link rel="manifest" href="manifest.webmanifest?v=3"><link rel="icon" href="icon.svg?v=2" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png?v=2">
 <script src="xlsx-export.js" defer></script>
 <script src="app.js" defer></script>
 </head>
@@ -18,8 +18,8 @@
 <section aria-labelledby="resultsTitle"><div class="resultsHead"><h2 id="resultsTitle">Особи</h2><p id="resultCount" role="status" aria-live="polite">Завантаження бази…</p></div><p id="error" class="message error" role="alert" hidden></p><button id="retry" hidden>Спробувати знову</button><p id="empty" class="message" hidden>За цими умовами нікого не знайдено. Змініть пошук або скиньте фільтри.</p><div id="people" class="peopleGrid"></div></section>
 <p id="offlineStatus" class="offlineStatus" role="status"></p>
 <nav class="end-actions" aria-label="Статистика та архів">
-<button id="openStatistics" type="button" aria-haspopup="dialog" disabled>Статистика участі в радах</button>
-<button id="exportStatistics" type="button" disabled>Експорт в Excel</button>
+<button id="openStatistics" type="button" aria-haspopup="dialog" disabled>Статистика участі <span class="mobile-button-line">в радах</span></button>
+<button id="exportStatistics" type="button" disabled>Експорт <span class="mobile-button-line">в Excel</span></button>
 <button id="openArchive" type="button" aria-haspopup="dialog" disabled>Архів</button>
 </nav>
 </main>
