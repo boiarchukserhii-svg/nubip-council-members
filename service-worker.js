@@ -1,6 +1,6 @@
 "use strict";
-const CACHE="nubip-council-members-v6-statistics",HOME=new URL("./",self.location).href;
-const ASSETS=["./","index.html","styles.css","app.js","xlsx-export.js","data.json","manifest.webmanifest?v=3","icon.svg?v=2","icon-192.png?v=2","icon-512.png?v=2","Zakon-Regular.otf","Zakon-Bold.otf"];
+const CACHE="nubip-council-members-v7-year-archive",HOME=new URL("./",self.location).href;
+const ASSETS=["./","index.html","styles.css","app.js","xlsx-export.js","data.json","periods.json","manifest.webmanifest?v=3","icon.svg?v=2","icon-192.png?v=2","icon-512.png?v=2","Zakon-Regular.otf","Zakon-Bold.otf"];
 self.addEventListener("install",event=>event.waitUntil((async()=>{await (await caches.open(CACHE)).addAll(ASSETS);await self.skipWaiting();})()));
 self.addEventListener("activate",event=>event.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith("nubip-council-members-")&&key!==CACHE)await caches.delete(key);await self.clients.claim();})()));
 self.addEventListener("fetch",event=>{
@@ -11,8 +11,8 @@ self.addEventListener("fetch",event=>{
   try{
    const response=await fetch(event.request,{cache:"no-cache"});
    if(response.ok&&response.type!=="opaque"){
-    if(url.pathname.endsWith("/data.json")){
-     const data=await response.clone().json();if(data.period!==2026||![data.persons,data.defenses,data.participation].every(Array.isArray))throw Error("Invalid data");
+    if(/\/data(?:-\d{4})?\.json$/.test(url.pathname)){
+     const data=await response.clone().json();if(!Number.isInteger(data.period)||![data.persons,data.defenses,data.participation].every(Array.isArray))throw Error("Invalid data");
     }
     await cache.put(key,response.clone());
    }

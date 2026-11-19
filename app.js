@@ -11,17 +11,57 @@ const candidateName=defense=>defense.candidate_display||defense.candidate;
 let database, people=[],defenses=new Map(), participationByPerson=new Map(),filtered=[],installPrompt;
 $("role").replaceChildren(new Option("Усі ролі",""),new Option("Голова ради","chair"),new Option("Рецензент","reviewer"));
 function allowedSource(url){try{const u=new URL(url);return u.protocol==="https:"&&["nubip.edu.ua","www.nubip.edu.ua"].includes(u.hostname);}catch{return false;}}
-function validate(data){
- if(!data||data.period!==2026||!["persons","defenses","participation"].every(key=>Array.isArray(data[key])))throw Error("База має некоректний формат.");
+function validate(data,period){
+ if(!data||data.period!==period||!["persons","defenses","participation"].every(key=>Array.isArray(data[key])))throw Error("База має некоректний формат.");
  const pids=new Set(data.persons.map(p=>p.person_id)),dids=new Set(data.defenses.map(d=>d.defense_id));
- if(pids.size!==data.persons.length||dids.size!==data.defenses.length||data.persons.some(p=>typeof p.name!=="string")||data.defenses.some(d=>!allowedSource(d.source_url)||!/^2026-\d{2}-\d{2}$/.test(d.date))||data.participation.some(m=>!pids.has(m.person_id)||!dids.has(m.defense_id)||!roleNames[m.role]))throw Error("Порушено зв’язки між особами та радами.");
+ if(pids.size!==data.persons.length||dids.size!==data.defenses.length||data.persons.some(p=>typeof p.name!=="string")||data.defenses.some(d=>!allowedSource(d.source_url)||(!d.date?.startsWith(period+"-")||!/^\d{4}-\d{2}-\d{2}$/.test(d.date)))||data.participation.some(m=>!pids.has(m.person_id)||!dids.has(m.defense_id)||!roleNames[m.role]))throw Error("Порушено зв’язки між особами та радами.");
  return data;
+}
+const requestedYear=new URLSearchParams(location.search).get("year");
+let archiveYear=null;
+async function fetchJson(path){
+ const response=await fetch(path,{cache:"no-cache"});
+ if(!response.ok)throw Error("Не вдалося завантажити "+(path==="periods.json"?"перелік років.":"базу за вибраний рік."));
+ return response.json();
+}
+function prepareArchive({current,years}){
+ const entries=Object.entries(years??{});
+ if(!Number.isInteger(current)||current<2000||current>9999||!Object.hasOwn(years??{},current)||
+  entries.some(([year,file])=>!/^\d{4}$/.test(year)||typeof file!=="string"||!/^[\w-]+\.json$/.test(file)||file==="periods.json")){
+  throw Error("Перелік років має некоректний формат.");
+ }
+ const archived=entries.map(([year])=>Number(year)).filter(year=>year<current).sort((a,b)=>b-a);
+ $("archiveYears").replaceChildren(...archived.map(year=>{
+  const link=el("a",year+" рік","button");
+  link.href="?year="+year;
+  if(String(year)===requestedYear)link.setAttribute("aria-current","page");
+  return link;
+ }));
+ $("archiveEmpty").hidden=archived.length>0;
+ $("archiveEmpty").textContent="Архівних років поки немає. Дані за "+current+" рік доступні в поточному довіднику.";
+ $("openArchive").disabled=false;
+ if(requestedYear!==null&&requestedYear!==String(current)&&!archived.includes(Number(requestedYear))){
+  $("archiveBanner").hidden=false;
+  $("archivePeriod").textContent="Архів за вибраний рік недоступний.";
+  throw Error("У переліку архіву немає вибраного року.");
+ }
+ archiveYear=archived.includes(Number(requestedYear))?Number(requestedYear):null;
+ const period=archiveYear??current;
+ $("archiveBanner").hidden=archiveYear===null;
+ $("archivePeriod").textContent="Архів за "+period+" рік";
+ $("periodLabel").textContent=archiveYear?"Архів · "+period:period;
+ $("overview").setAttribute("aria-label","Підсумки за "+period+" рік");
+ return {period,file:years[period]};
+}
+for(const [dialog,open,close] of [["statistics","openStatistics","closeStatistics"],["archive","openArchive","closeArchive"]]){
+ $(open).onclick=()=>$(dialog).showModal();
+ $(close).onclick=()=>$(dialog).close();
 }
 async function load(){
  $("error").hidden=$("retry").hidden=true;
  try{
-  const response=await fetch("data.json",{cache:"no-cache"});if(!response.ok)throw Error("Не вдалося завантажити базу.");
-  database=validate(await response.json());defenses=new Map(database.defenses.map(d=>[d.defense_id,d]));
+  const {period,file}=prepareArchive(await fetchJson("periods.json"));
+  database=validate(await fetchJson(file),period);defenses=new Map(database.defenses.map(d=>[d.defense_id,d]));
   participationByPerson=new Map(database.persons.map(p=>[p.person_id,[]]));
   for(const m of database.participation)participationByPerson.get(m.person_id).push({...m,defense:defenses.get(m.defense_id)});
   people=database.persons.map(p=>({...p,memberships:participationByPerson.get(p.person_id)}));
@@ -34,7 +74,7 @@ async function load(){
  }catch(error){$("error").textContent=error.message+" Перевірте з’єднання та спробуйте знову.";$("error").hidden=$("retry").hidden=false;$("resultCount").textContent="База недоступна";}
 }
 function restoreFilters(){const params=new URLSearchParams(location.search);for(const id of ["search","role","specialty","sort"]){const value=params.get(id);if(value!==null&&(id==="search"||Array.from($(id).options).some(o=>o.value===value)))$(id).value=value;}}
-function saveFilters(){const params=new URLSearchParams();for(const id of ["search","role","specialty","sort"]){const value=$(id).value;if(value&&(id!=="sort"||value!=="name"))params.set(id,value);}history.replaceState(null,"",location.pathname+(params.size?"?"+params:"")+location.hash);}
+function saveFilters(){const params=new URLSearchParams();if(archiveYear!==null)params.set("year",archiveYear);for(const id of ["search","role","specialty","sort"]){const value=$(id).value;if(value&&(id!=="sort"||value!=="name"))params.set(id,value);}history.replaceState(null,"",location.pathname+(params.size?"?"+params:"")+location.hash);}
 function matches(person){
  const query=normalize($("search").value),role=$("role").value,specialty=$("specialty").value;
  const tokens=query.split(" ").filter(Boolean);
@@ -64,8 +104,8 @@ function renderStatistics(){
   }
   return [person.name,councils.size,chairs.size,reviewers.size];
  }).sort((a,b)=>b[1]-a[1]||collator.compare(a[0],b[0]));
- $("statistics").hidden=false;
- $("statisticsCount").textContent=statisticsRows.length?labelPeople(statisticsRows.length):"За цими умовами нікого не знайдено.";
+ $("openStatistics").disabled=false;
+ $("statisticsCount").textContent=database.period+" рік · "+(statisticsRows.length?labelPeople(statisticsRows.length):"За цими умовами нікого не знайдено.");
  $("exportStatistics").disabled=!statisticsRows.length;
  $("statisticsRows").replaceChildren(...statisticsRows.map(values=>{
   const row=el("tr");
@@ -106,7 +146,7 @@ function render(){
 function openProfile(person,memberships){
  $("profileName").textContent=person.name;
  const limited=memberships.length!==person.memberships.length;
- $("profileScope").textContent=limited?`Показано ${memberships.length} із ${person.memberships.length} участей відповідно до фільтрів.`:"Усі участі цієї особи за 2026 рік.";
+ $("profileScope").textContent=limited?`Показано ${memberships.length} із ${person.memberships.length} участей відповідно до фільтрів.`:`Усі участі цієї особи за ${database.period} рік.`;
  $("profileCounts").replaceChildren(badges(memberships));
  $("participations").replaceChildren(...[...memberships].sort((a,b)=>b.defense.date.localeCompare(a.defense.date)||collator.compare(a.defense.candidate,b.defense.candidate)).map(m=>{
   const d=m.defense,article=el("article",null,"participation"),meta=el("div",null,"meta");
