@@ -52,12 +52,45 @@ function personIcon(){
 }
 function tally(memberships){const chair=memberships.filter(m=>m.role==="chair").length;return {chair,reviewer:memberships.length-chair};}
 function badges(memberships){const counts=tally(memberships),box=el("div",null,"counts");if(counts.chair)box.append(el("span",`Голова ради · ${counts.chair}`,"badge"));if(counts.reviewer)box.append(el("span",`Рецензент · ${counts.reviewer}`,"badge reviewer"));return box;}
+const statisticsHeaders=["ПІБ","Усього рад","Як голова","Як рецензент"];
+let statisticsRows=[];
+function renderStatistics(){
+ statisticsRows=filtered.map(({person,memberships})=>{
+  const councils=new Set(), chairs=new Set(), reviewers=new Set();
+  for(const membership of memberships){
+   councils.add(membership.defense_id);
+   const roleCouncils=membership.role==="chair"?chairs:reviewers;
+   roleCouncils.add(membership.defense_id);
+  }
+  return [person.name,councils.size,chairs.size,reviewers.size];
+ }).sort((a,b)=>b[1]-a[1]||collator.compare(a[0],b[0]));
+ $("statistics").hidden=false;
+ $("statisticsCount").textContent=statisticsRows.length?labelPeople(statisticsRows.length):"За цими умовами нікого не знайдено.";
+ $("exportStatistics").disabled=!statisticsRows.length;
+ $("statisticsRows").replaceChildren(...statisticsRows.map(values=>{
+  const row=el("tr");
+  const name=el("th",values[0]);name.scope="row";row.append(name);
+  for(const count of values.slice(1))row.append(el("td",count));
+  return row;
+ }));
+}
+$("exportStatistics").onclick=()=>{
+ if(!statisticsRows.length)return;
+ const filters=[
+  ["Період",database.period],
+  ["Пошук",$("search").value.trim()||"Усі записи"],
+  ["Роль",roleNames[$("role").value]||"Усі ролі"],
+  ["Спеціальність",$("specialty").value||"Усі спеціальності"]
+ ];
+ downloadCouncilWorkbook(database.period,[statisticsHeaders,...statisticsRows],filters);
+};
 function render(){
  if(!database)return;
  filtered=people.map(person=>({person,memberships:matches(person)})).filter(p=>p.memberships.length);
  filtered.sort((a,b)=>($("sort").value==="count"?b.memberships.length-a.memberships.length:0)||collator.compare(a.person.name,b.person.name));
  $("resultCount").textContent=labelPeople(filtered.length)+" · "+filtered.reduce((sum,p)=>sum+p.memberships.length,0)+" участей";
  $("empty").hidden=filtered.length>0;
+ renderStatistics();
  $("people").replaceChildren(...filtered.map(({person,memberships})=>{
   const card=el("button",null,"personCard");card.type="button";card.setAttribute("aria-haspopup","dialog");
   const top=el("div",null,"nameLine"),name=el("span",null,"personName"),parts=person.name.split(" ");
